@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "lib": ["deno.window"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true
+  },
+  "importMap": "./import_map.json",
+  "tasks": {
+    "solve": "deno run --allow-read --allow-net=adventofcode.com run.ts",
+    "watch": "deno run --allow-read --allow-net=adventofcode.com --watch run.ts"
+  }
+}
