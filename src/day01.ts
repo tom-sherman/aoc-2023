@@ -10,3 +10,55 @@ export function solvePart1(input: string) {
 
   return sum(calibrationValues);
 }
+
+export function solvePart2(input: string) {
+  const lines = input.trim().split("\n");
+  const calibrationValues = lines.map((line) => {
+    const numbers = getNumbers(line);
+    const val = Number(numbers.at(0)! + numbers.at(-1)!);
+    console.log(line, numbers, val);
+    return val;
+  });
+
+  return sum(calibrationValues);
+}
+
+const DIGIT_LOOKUP = {
+  "one": "1",
+  "two": "2",
+  "three": "3",
+  "four": "4",
+  "five": "5",
+  "six": "6",
+  "seven": "7",
+  "eight": "8",
+  "nine": "9",
+  "1": "1",
+  "2": "2",
+  "3": "3",
+  "4": "4",
+  "5": "5",
+  "6": "6",
+  "7": "7",
+  "8": "8",
+  "9": "9",
+};
+
+const DIGITS = Object.keys(DIGIT_LOOKUP) as (keyof typeof DIGIT_LOOKUP)[];
+
+function getNumbers(line: string) {
+  const numbers: string[] = [];
+  while (line.length > 0) {
+    const digitString = DIGITS.find((digit) => line.startsWith(digit));
+    if (!digitString) {
+      line = line.slice(1);
+      continue;
+    }
+
+    const digit = DIGIT_LOOKUP[digitString];
+    numbers.push(digit);
+    line = line.slice(digitString.length);
+  }
+
+  return numbers;
+}
