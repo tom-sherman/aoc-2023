@@ -1,7 +1,7 @@
 import { sum } from "lib/arr-util.ts";
 
 export function solvePart1(input: string) {
-  const lines = input.trim().split("\n");
+  const lines = input.split("\n");
 
   const calibrationValues = lines.map((line) => {
     const numbers = [...line].filter((char) => !isNaN(Number(char)));
@@ -12,12 +12,10 @@ export function solvePart1(input: string) {
 }
 
 export function solvePart2(input: string) {
-  const lines = input.trim().split("\n");
+  const lines = input.split("\n");
   const calibrationValues = lines.map((line) => {
     const numbers = getNumbers(line);
-    const val = Number(numbers.at(0)! + numbers.at(-1)!);
-    console.log(line, numbers, val);
-    return val;
+    return Number(numbers.at(0)! + numbers.at(-1)!);
   });
 
   return sum(calibrationValues);

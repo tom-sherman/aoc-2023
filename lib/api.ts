@@ -27,7 +27,7 @@ export class AocApi {
     const cache = await this.#getCache();
     const cached = await cache.match(url);
     if (cached) {
-      return cached.text();
+      return trimEndNewLine(await cached.text());
     }
     const response = await fetch(url.toString(), {
       headers: {
@@ -40,7 +40,7 @@ export class AocApi {
     }
 
     await cache.put(url, response.clone());
-    return response.text();
+    return trimEndNewLine(await response.text());
   }
 
   async sendSolution(day: number, part: "1" | "2", solution: string): Promise<
@@ -100,4 +100,8 @@ export class AocApi {
 
     return { status, infoText: info };
   }
+}
+
+function trimEndNewLine(str: string) {
+  return str.replace(/\n$/, "");
 }
