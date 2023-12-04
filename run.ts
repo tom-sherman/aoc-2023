@@ -1,12 +1,8 @@
 import { AocApi } from "lib/api.ts";
 import { bold, italic } from "std/fmt/colors.ts";
 import { config } from "dotenv/mod.ts";
-import {
-  choice,
-  Command,
-  number as numberArgument,
-  string as stringArgument,
-} from "clay/mod.ts";
+import { Command, EnumType } from "cliffy/command/mod.ts";
+import { Confirm } from "cliffy/prompt/mod.ts";
 
 const { AOC_TOKEN } = config();
 
@@ -15,56 +11,52 @@ if (!AOC_TOKEN) {
   Deno.exit(1);
 }
 
-const cmd = new Command("Run Advent of Code solutions")
-  .optional(stringArgument, "year", { flags: ["year"] })
-  .required(numberArgument, "day")
-  .optional(choice<("1" | "2")[]>("PART", ["1", "2"]), "part")
-  .flag("auto-submit", { aliases: ["submit"] });
+await new Command()
+  .name("aoc")
+  .description("Run Advent of Code solutions")
+  .type("PART", new EnumType(["1", "2"]))
+  .arguments("<day:number> [part:PART]")
+  .option("-y, --year <year:number>", "Year to run", { default: 2023 })
+  .option("-s, --submit", "Submit solution")
+  .action(async ({ year, submit }, day, part = "1") => {
+    const api = new AocApi(
+      `https://adventofcode.com/${year}/`,
+      AOC_TOKEN,
+    );
+    const moduleName = `day${String(day).padStart(2, "0")}.ts`;
+    const [input, module] = await Promise.all([
+      api.getInput(day),
+      import(`./src/${moduleName}`),
+    ]);
 
-const args = cmd.run();
+    console.log(
+      `Running ${bold(moduleName)} with part ${bold(String(part))}...`,
+    );
 
-const api = new AocApi(
-  `https://adventofcode.com/${args.year ?? "2023"}/`,
-  AOC_TOKEN,
-);
+    let output;
+    switch (part) {
+      case "1":
+        output = await module.solvePart1(input);
+        break;
+      case "2":
+        output = await module.solvePart2(input);
+        break;
+    }
 
-const moduleName = `day${String(args.day).padStart(2, "0")}.ts`;
+    console.log(bold("Got output:"));
+    console.log(output);
+    const shouldCheck = submit ??
+      await Confirm.prompt(bold(italic("Do you want to check the solution?")));
 
-const [input, module] = await Promise.all([
-  api.getInput(args.day),
-  import(`./src/${moduleName}`),
-]);
+    if (shouldCheck) {
+      const solutionResponse = await api.sendSolution(
+        day,
+        part,
+        output,
+      );
 
-const part = args.part ?? "1";
-
-console.log(
-  `Running ${bold(moduleName)} with part ${bold(String(part))}...`,
-);
-
-let output;
-switch (part) {
-  case "1":
-    output = await module.solvePart1(input);
-    break;
-  case "2":
-    output = await module.solvePart2(input);
-    break;
-}
-
-console.log(bold("Got output:"));
-console.log(output);
-
-const shouldCheck = args["auto-submit"] ||
-  confirm(bold(italic("Do you want to check the solution?")));
-
-if (shouldCheck) {
-  const solutionResponse = await api.sendSolution(
-    args.day,
-    part,
-    output,
-  );
-
-  console.log(bold("Got solution response:"));
-  console.log(`status=${solutionResponse.status}`);
-  console.log(solutionResponse.infoText);
-}
+      console.log(bold("Got solution response:"));
+      console.log(`status=${solutionResponse.status}`);
+      console.log(solutionResponse.infoText);
+    }
+  }).parse(Deno.args);
